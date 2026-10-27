@@ -1,3 +1,4 @@
 base/
 config.json
 __pycache__/
+visor-*.html

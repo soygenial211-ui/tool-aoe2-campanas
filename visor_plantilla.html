@@ -1,0 +1,225 @@
+<title>__TITULO__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral+SC:wght@500;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: cabecera con pestañas; Civilizaciones = rejilla de fichas + ficha abierta; Unidades = tabla filtrable */
+:root{
+  --bg:#eef0ec; --surface:#fbfcfa; --sunk:#e4e8e2; --fg:#1d2422; --muted:#5c6862; --line:#d3d8d2;
+  --accent:#8a2b2b; --accent-soft:#f3e3e0; --gold:#8a6414; --off:#9aa39e;
+  --f-display:"Spectral SC",Georgia,serif; --f-body:"Source Sans 3",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1c2320; --sunk:#232b28; --fg:#e3e8e4; --muted:#94a19a; --line:#2f3934;
+  --accent:#e07a68; --accent-soft:#3a2522; --gold:#d4a94a; --off:#5f6a65; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1c2320; --sunk:#232b28; --fg:#e3e8e4; --muted:#94a19a; --line:#2f3934;
+  --accent:#e07a68; --accent-soft:#3a2522; --gold:#d4a94a; --off:#5f6a65; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px;border-bottom:2px solid var(--fg);padding-bottom:12px}
+h1{font:700 clamp(1.6rem,4vw,2.3rem)/1.1 var(--f-display);margin:0;letter-spacing:.02em;text-wrap:balance}
+.sub{color:var(--muted);font-size:.9rem;margin-top:4px}
+.tabs{display:flex;gap:4px}
+.tabs button{font:600 .95rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 14px;border-radius:6px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+button:focus-visible,input:focus-visible,select:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:18px 0 14px}
+.bar input[type=search],.bar select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.bar input[type=search]{flex:1 1 220px;min-width:0}
+.chip{font:600 .85rem var(--f-body);border:1px solid var(--line);background:transparent;color:var(--muted);padding:5px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.count{color:var(--muted);font-size:.85rem;margin-left:auto;font-variant-numeric:tabular-nums}
+label.tg{display:flex;gap:6px;align-items:center;font-size:.9rem;color:var(--muted);cursor:pointer}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.card{text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;display:grid;gap:2px;align-content:start}
+.card:hover{border-color:var(--muted)}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card .n{font:700 1.05rem var(--f-display);letter-spacing:.02em}
+.card .o{font-size:.78rem;color:var(--muted)}
+.card .u{font-size:.85rem}
+.card.off .n{color:var(--off)}
+.tag{display:inline-block;font:600 .68rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;vertical-align:middle;margin-left:6px}
+.tag.camp{background:var(--accent);color:var(--surface)}
+.tag.offt{border:1px solid var(--off);color:var(--off)}
+
+#detalle{margin-bottom:18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px 28px}
+#detalle h2{font:700 1.7rem/1.1 var(--f-display);margin:0 0 2px}
+#detalle h3{font:600 .75rem var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+#detalle h3:first-child{margin-top:0}
+.desc{white-space:pre-line;font-size:.93rem;max-width:62ch}
+.meta{font:.78rem var(--f-mono);color:var(--muted)}
+.ut{border-left:3px solid var(--gold);padding:2px 0 2px 10px;margin-bottom:8px}
+.ut b{font-weight:700}
+.ut .e{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+th{font:600 .72rem var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;background:var(--bg)}
+#tabla th[data-k]{cursor:pointer;user-select:none}
+#tabla th[data-k]:hover{color:var(--fg)}
+#tabla th.on{color:var(--accent)}
+td.num{text-align:right;font-family:var(--f-mono);font-size:.85rem}
+td .nom{font-weight:700}
+td .sm{font-size:.78rem;color:var(--muted)}
+td.bw{white-space:normal;min-width:150px;font-size:.82rem}
+.cost{font:.82rem var(--f-mono)}
+.cost i{font-style:normal;color:var(--muted)}
+.copy{font:.75rem var(--f-mono);border:1px solid var(--line);background:var(--sunk);color:var(--fg);padding:3px 7px;border-radius:5px;cursor:pointer}
+.copy:hover{border-color:var(--accent)}
+tr.uu td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+.stat td{padding:4px 8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:.9rem}
+.help{font-size:.88rem;color:var(--muted);max-width:75ch;margin:0 0 12px}
+code{font:.85em var(--f-mono);background:var(--sunk);padding:1px 5px;border-radius:4px}
+@media (max-width:760px){#detalle{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div><h1>__TITULO__</h1><div class="sub">__SUBTITULO__</div></div>
+    <div class="tabs" role="tablist">
+      <button id="t-civs" role="tab" aria-selected="true">Civilizaciones</button>
+      <button id="t-uds" role="tab" aria-selected="false">Unidades</button>
+    </div>
+  </header>
+
+  <section id="v-civs">
+    <div class="bar">
+      <input id="q-civ" type="search" placeholder="Buscar civ, unidad única o tecnología…" aria-label="Buscar civilización">
+      <button class="chip" data-f="todas" aria-pressed="true">Todas</button>
+      <button class="chip" data-f="campana" aria-pressed="false">De la campaña</button>
+      <button class="chip" data-f="apagada" aria-pressed="false">Sin usar</button>
+      <span class="count" id="n-civ"></span>
+    </div>
+    <div id="detalle" hidden></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="v-uds" hidden>
+    <div class="bar">
+      <input id="q-ud" type="search" placeholder="Buscar unidad, civ o tipo…" aria-label="Buscar unidad">
+      <select id="tipo" aria-label="Tipo de unidad"><option value="">Todos los tipos</option></select>
+      <label class="tg"><input type="checkbox" id="solo-uu" checked> Solo unidades únicas</label>
+      <span class="count" id="n-ud"></span>
+    </div>
+    <p class="help">Copia el botón de la derecha y pégalo en la receta, dentro de <code>unidad_unica:</code>. Ahí puedes ajustar con <code>cambios: {vida: "+20", velocidad: "x1.1"}</code>. Los números son del .dat en Edad Oscura, sin mejoras.</p>
+    <div class="scroll"><table id="tabla">
+      <thead><tr>
+        <th data-k="nombre">Unidad</th><th data-k="tipo">Tipo</th>
+        <th data-k="hp" class="r">HP</th><th data-k="atk">Atq</th><th data-k="ma">Arm M</th><th data-k="pa">Arm P</th>
+        <th data-k="rng">Alc</th><th data-k="spd">Vel</th><th data-k="total">Costo</th><th data-k="tiempo">Tiempo</th>
+        <th>Bonus de ataque</th><th>IDs</th>
+      </tr></thead><tbody></tbody>
+    </table></div>
+  </section>
+</div>
+
+<script>
+const D = __DATOS__;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtCosto = c => Object.entries(c||{}).map(([k,v]) => `${v}<i>${k[0].toUpperCase()}</i>`).join(" ") || "—";
+const total = c => Object.values(c||{}).reduce((a,b)=>a+b,0);
+const guardar = (k,v) => { try { localStorage.setItem(k,v) } catch(e){} };
+const leer = k => { try { return localStorage.getItem(k) } catch(e){ return null } };
+
+/* pestañas */
+function pestana(cual){
+  $("#v-civs").hidden = cual !== "civs"; $("#v-uds").hidden = cual !== "uds";
+  $("#t-civs").setAttribute("aria-selected", cual === "civs"); $("#t-uds").setAttribute("aria-selected", cual === "uds");
+  guardar("visor-tab", cual);
+}
+$("#t-civs").onclick = () => pestana("civs"); $("#t-uds").onclick = () => pestana("uds");
+
+/* civilizaciones */
+let filtro = "todas", seleccion = null;
+function pintarCivs(){
+  const q = $("#q-civ").value.trim().toLowerCase();
+  const lista = D.civs.filter(c => (filtro === "todas" || (filtro === "campana" ? c.campana : c.apagada))
+    && (!q || [c.nombre, c.original, c.interno, ...c.uu.map(u=>u.nombre), ...c.ut.map(t=>t.nombre)].join(" ").toLowerCase().includes(q)))
+    .sort((a,b) => (b.campana - a.campana) || a.nombre.localeCompare(b.nombre));
+  $("#n-civ").textContent = `${lista.length} de ${D.civs.length}`;
+  $("#grid").innerHTML = lista.map(c => `
+    <button class="card${c.apagada?" off":""}${seleccion===c.indice?" sel":""}" data-i="${c.indice}">
+      <span class="n">${esc(c.nombre)}${c.campana?'<span class="tag camp">campaña</span>':""}${c.apagada?'<span class="tag offt">sin usar</span>':""}</span>
+      ${c.campana?`<span class="o">base: ${esc(c.original)}</span>`:""}
+      <span class="u">${esc(c.uu[0]?.nombre || "—")}</span>
+      <span class="o">${c.ut.map(t=>esc(t.nombre)).join(" · ")}</span>
+    </button>`).join("");
+}
+function statsUU(c){
+  if(!c.uu.length) return "";
+  const filas = [["HP","hp"],["Ataque","atk"],["Armadura cuerpo","ma"],["Armadura perforante","pa"],["Alcance","rng"],["Velocidad","spd"],["Visión","los"],["Recarga","rel"],["Tiempo","tiempo"]];
+  return `<div class="scroll"><table class="stat"><thead><tr><th></th>${c.uu.map(u=>`<th>${esc(u.nombre)}</th>`).join("")}</tr></thead><tbody>
+    ${filas.map(([n,k]) => `<tr><td>${n}</td>${c.uu.map(u=>`<td class="num">${u[k]}</td>`).join("")}</tr>`).join("")}
+    <tr><td>Costo</td>${c.uu.map(u=>`<td class="cost">${fmtCosto(u.costo)}</td>`).join("")}</tr>
+    <tr><td>Bonus</td>${c.uu.map(u=>`<td class="bw">${u.bonos.map(b=>`+${b[1]} vs ${esc(b[0])}`).join(", ")||"—"}</td>`).join("")}</tr>
+  </tbody></table></div>
+  <p class="meta">IDs: usar: [${c.uu.map(u=>u.id).join(", ")}]</p>`;
+}
+function abrir(i){
+  seleccion = i; const c = D.civs.find(x => x.indice === i); const d = $("#detalle");
+  d.hidden = false;
+  d.innerHTML = `<div>
+      <h2>${esc(c.nombre)}</h2>
+      <div class="meta">índice ${c.indice} · interno ${esc(c.interno)} · árbol ${esc(c.arbol)}${c.campana?` · base ${esc(c.original)}`:""}</div>
+      <h3>Descripción del árbol</h3><div class="desc">${esc(c.descripcion) || "—"}</div>
+    </div><div>
+      <h3>Unidad única${c.uu[0]?.ayuda?" · "+esc(c.uu[0].tipo):""}</h3>
+      ${c.uu[0]?.ayuda?`<p class="desc">${esc(c.uu[0].ayuda)}</p>`:""}
+      ${statsUU(c)}
+      <h3>Tecnologías únicas</h3>
+      ${c.ut.map(t=>`<div class="ut"><span class="e">${t.edad} Age</span><br><b>${esc(t.nombre)}</b> <span class="cost">${fmtCosto(t.costo)}</span><br><span class="desc">${esc(t.ayuda)||"—"}</span></div>`).join("")}
+    </div>`;
+  pintarCivs();
+  d.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"nearest"});
+}
+$("#grid").addEventListener("click", e => { const b = e.target.closest(".card"); if(b) abrir(+b.dataset.i); });
+$("#q-civ").addEventListener("input", pintarCivs);
+document.querySelectorAll(".chip").forEach(ch => ch.onclick = () => {
+  filtro = ch.dataset.f; document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === ch)); pintarCivs();
+});
+
+/* unidades */
+const tipos = [...new Set(D.unidades.map(u=>u.tipo))].sort();
+$("#tipo").insertAdjacentHTML("beforeend", tipos.map(t=>`<option>${esc(t)}</option>`).join(""));
+D.unidades.forEach(u => u.total = total(u.costo));
+let orden = {k:"nombre", dir:1};
+function pintarUds(){
+  const q = $("#q-ud").value.trim().toLowerCase(), tipo = $("#tipo").value, solo = $("#solo-uu").checked;
+  const lista = D.unidades.filter(u => (!solo || u.uu_de.length) && (!tipo || u.tipo === tipo)
+      && (!q || [u.nombre, u.interno, u.tipo, ...u.uu_de].join(" ").toLowerCase().includes(q)))
+    .sort((a,b) => { const x=a[orden.k], y=b[orden.k]; return (typeof x === "string" ? x.localeCompare(y) : x - y) * orden.dir; });
+  $("#n-ud").textContent = `${lista.length} unidades`;
+  document.querySelectorAll("#tabla th[data-k]").forEach(th => th.classList.toggle("on", th.dataset.k === orden.k));
+  $("#tabla tbody").innerHTML = lista.map(u => {
+    const ids = u.elite ? `[${u.id}, ${u.elite}]` : `[${u.id}, ${u.id}]`;
+    return `<tr class="${u.uu_de.length?"uu":""}">
+      <td><span class="nom">${esc(u.nombre)}</span><br><span class="sm">${u.uu_de.length?"UU de "+esc(u.uu_de.join(", ")):esc(u.interno)}</span></td>
+      <td>${esc(u.tipo)}</td>
+      <td class="num">${u.hp}</td><td class="num">${u.atk}</td><td class="num">${u.ma}</td><td class="num">${u.pa}</td>
+      <td class="num">${u.rng}</td><td class="num">${u.spd}</td><td class="cost">${fmtCosto(u.costo)}</td><td class="num">${u.tiempo}s</td>
+      <td class="bw">${u.bonos.map(b=>`+${b[1]} ${esc(b[0])}`).join(", ")||"—"}</td>
+      <td><button class="copy" data-c="usar: ${ids}" title="Copiar para la receta">usar: ${ids}</button></td>
+    </tr>`; }).join("");
+}
+document.querySelectorAll("#tabla th[data-k]").forEach(th => th.onclick = () => {
+  orden = {k: th.dataset.k, dir: orden.k === th.dataset.k ? -orden.dir : (["nombre","tipo"].includes(th.dataset.k) ? 1 : -1)}; pintarUds();
+});
+["#q-ud","#tipo","#solo-uu"].forEach(s => $(s).addEventListener("input", pintarUds));
+function aviso(t){ const n = document.createElement("div"); n.className = "toast"; n.textContent = t; document.body.append(n); setTimeout(()=>n.remove(), 1600); }
+$("#tabla").addEventListener("click", e => {
+  const b = e.target.closest(".copy"); if(!b) return;
+  const txt = b.dataset.c;
+  (navigator.clipboard?.writeText(txt) ?? Promise.reject()).then(() => aviso("Copiado: " + txt), () => {
+    const r = document.createRange(); r.selectNodeContents(b); const s = getSelection(); s.removeAllRanges(); s.addRange(r); aviso("Selecciónalo y copia con Ctrl+C");
+  });
+});
+
+pintarCivs(); pintarUds();
+const primera = D.civs.find(c => c.campana) || D.civs[0]; if(primera) abrir(primera.indice);
+pestana(leer("visor-tab") === "uds" ? "uds" : "civs");
+</script>

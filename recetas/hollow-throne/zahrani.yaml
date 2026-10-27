@@ -1,0 +1,61 @@
+# Zahrani — Sultanato de Zahran (espacio: Sarracenos)
+# Identidad: imperio del comercio. Rutas rápidas, mercado barato, flota fuerte,
+# camellos y arqueros. Sin caballería pesada ni infantería de élite.
+espacio: Saracens
+nombre: Zahrani
+descripcion: Trade civilization. Fast trade, strong navy, camels and archers.
+limpiar_bonos: true
+archivo_arbol: SARACENS      # CivTechTrees/SARACENS.json
+
+textos:
+  civ: Zahrani
+  unidad_unica: Qawwas
+  unidad_unica_ayuda: Archer with high pierce armor.
+  bono_equipo: Trade units +10% speed
+
+bonos:
+  - nombre: Comision del mercado 5%
+    texto: "Market trade fee is only 5%"
+    efectos:
+      - {op: recurso, id: 78, modo: fijar, valor: 0.05}
+  - nombre: Muelles 20% mas rapidos
+    texto: "Docks work 20% faster"
+    efectos:
+      - {op: multiplicar, grupo: muelles, atributo: ritmo_trabajo, valor: 1.2}
+  - nombre: Camellos +20% vida
+    texto: "Camels +20% HP"
+    efectos:
+      - {op: multiplicar, grupo: camellos, atributo: vida, valor: 1.2}
+  - nombre: Barcos de guerra +10% vida
+    texto: "Warships +10% HP"
+    efectos:
+      - {op: multiplicar, clase: 22, atributo: vida, valor: 1.1}
+  - nombre: Arqueros a pie +1 alcance (Castillos)
+    texto: "Foot archers +1 range starting in the Castle Age"
+    edad: castillos
+    efectos:
+      - {op: sumar, clase: 0, atributo: alcance, valor: 1}
+
+bono_equipo:
+  - {op: multiplicar, clase: [19, 2], atributo: velocidad, valor: 1.1}
+
+unidad_unica:          # Qawwas = Arquero de ratán
+  usar: [1129, 1131]
+
+tech_castillos:
+  nombre: Caravanserai
+  ayuda: Trade units +50% HP and +15% speed.
+  efectos:
+    - {op: multiplicar, clase: [19, 2], atributo: vida, valor: 1.5}
+    - {op: multiplicar, clase: [19, 2], atributo: velocidad, valor: 1.15}
+
+tech_imperial:
+  nombre: Desert Mail
+  ayuda: Camels +1/+1 armor.
+  efectos:
+    - {op: sumar, grupo: camellos, atributo: armadura, tipo: cuerpo, valor: 1}
+    - {op: sumar, grupo: camellos, atributo: armadura, tipo: perforante, valor: 1}
+
+arbol:
+  sin: [Knight (make avail), Champion, Halberdier, Siege Ram]
+  con: [Arbalest, Thumb Ring, Parthian Tactics, Heavy Cavalry Archer, Fast Fire Ship, Shipwright]

@@ -1,0 +1,71 @@
+# Varenese — Imperio de Varenhal (espacio: Bizantinos)
+# Identidad: el viejo imperio. Legiones de infantería disciplinada, contra-unidades baratas,
+# fortalezas que no caen y una caballería de élite pesada. Sin pólvora: un imperio anticuado.
+espacio: Byzantine
+nombre: Varenese
+descripcion: Imperial civilization. Disciplined infantry, cheap counter units and fortifications.
+limpiar_bonos: true
+archivo_arbol: BYZANTINES      # CivTechTrees/BYZANTINES.json
+
+textos:
+  civ: Varenese
+  unidad_unica: Iron Lancer
+  unidad_unica_ayuda: Heavy cavalry, strong against infantry. Gains trample damage with Old Guard.
+  bono_equipo: Towers and castles +2 line of sight
+
+bonos:
+  - nombre: Edificios +10% vida (Feudal)
+    texto: "Buildings +10% HP in the Feudal Age, +20% in the Castle Age, +30% in the Imperial Age"
+    edad: feudal
+    efectos:
+      - {op: multiplicar, grupo: edificios, atributo: vida, valor: 1.10}
+  - nombre: Edificios +20% vida (Castillos)
+    texto: ""     # se describe junto con el bono anterior
+    edad: castillos
+    efectos:
+      - {op: multiplicar, grupo: edificios, atributo: vida, valor: 1.0909}
+  - nombre: Edificios +30% vida (Imperial)
+    texto: ""     # se describe junto con el bono anterior
+    edad: imperial
+    efectos:
+      - {op: multiplicar, grupo: edificios, atributo: vida, valor: 1.0833}
+  - nombre: Piqueros, escaramuzadores y camellos 20% mas baratos
+    texto: "Spearmen, Skirmishers and Camels cost -20%"
+    efectos:
+      - {op: multiplicar, grupo: lanceros_y_escaramuzadores_y_camellos, atributo: costo, valor: 0.8}
+  - nombre: Infanteria se entrena 20% mas rapido (Castillos)
+    texto: "Infantry trains 20% faster starting in the Castle Age"
+    edad: castillos
+    efectos:
+      - {op: multiplicar, grupo: infanteria, atributo: tiempo_creacion, valor: 0.83}
+  - nombre: Edad Imperial 33% mas barata
+    texto: "Advancing to the Imperial Age costs -33%"
+    efectos:
+      - {op: costo_tech, tech: Imperial Age, recursos: [comida, oro], multiplicar: 0.67}
+
+bono_equipo:
+  - {op: sumar, clase: 52, unidad: 82, atributo: vision, valor: 2}
+
+unidad_unica:          # Iron Lancer = Catafracta (se queda la de los Bizantinos)
+  cambios: {}
+
+
+tech_castillos:
+  nombre: Bastion Doctrine
+  ayuda: Towers and castles +1 range; walls and gates +30% HP.
+  efectos:
+    - {op: sumar, clase: 52, unidad: 82, atributo: alcance, valor: 1}
+    - {op: multiplicar, clase: [27, 39], atributo: vida, valor: 1.3}
+
+tech_imperial:
+  nombre: Old Guard
+  ayuda: Iron Lancers +2/+1 armor and deal trample damage.
+  efectos:
+    - {op: sumar, unidades: [40, 553], atributo: armadura, tipo: cuerpo, valor: 2}
+    - {op: sumar, unidades: [40, 553], atributo: armadura, tipo: perforante, valor: 1}
+    - {op: sumar, unidades: [40, 553], atributo: radio_area, valor: 0.5}
+
+arbol:
+  # imperio anticuado: sin pólvora, sin Arbalestero ni Paladín (para eso está el Iron Lancer)
+  sin: [Paladin, Arbalest, Bombard Cannon, Hussar, Siege Onager]
+  con: [Masonry, Architecture, Blast Furnace, Herbal Medicine]

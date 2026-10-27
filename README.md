@@ -4,7 +4,7 @@ Un banco de datos (`.dat`) propio por cada campaña de AoE2 DE, generado desde r
 
 ## Instalación (una vez)
 ```
-pip install genieutils-py
+pip install -r requirements.txt
 copy config.ejemplo.json config.json   (ajusta rutas si cambian)
 ```
 
@@ -17,11 +17,19 @@ copy config.ejemplo.json config.json   (ajusta rutas si cambian)
 | `python campana.py info` | Lista las civs con su índice. |
 | `python campana.py info Aztecs` | Techs propias, bono de equipo y lo que le falta en el árbol. |
 | `python campana.py info Aztecs --mod CAMP-Muisca` | Lo mismo, leyendo el `.dat` de esa campaña. |
+| `python campana.py visor --mod CAMP-HollowThrone` | Genera `visor-CAMP-HollowThrone.html`: fichas de las civs y catálogo de unidades con el `usar: [id, id]` listo para copiar. Sin `--mod`, el juego original. |
+| `python campana.py aplicar recetas/hollow-throne --mod CAMP-HollowThrone` | Parte del `.dat` original congelado y aplica todas las recetas de la carpeta: bonos, UU, UT, árbol (`.dat` + `CivTechTrees`) y textos. Se puede repetir cuantas veces quieras. |
 
 ## Reglas
 - Nunca toca archivos del juego.
 - En el juego, deja activo **un solo data mod** a la vez.
 - `base/` no va a git (pesa ~12 MB por versión); las recetas y scripts sí.
 
+## Recetas
+Cada civ es un `.yaml` en `recetas/<campaña>/`. Ver `recetas/hollow-throne/` como ejemplo.
+
 ## Próximo
-`aplicar <receta>`, `reconstruir`, `arbol` (genera CivTechTrees + vista HTML), `validar`.
+`validar`.
+
+## Campaña nueva
+Ver [NUEVA_CAMPANA.md](NUEVA_CAMPANA.md): qué datos darle a Claude y el proceso completo.

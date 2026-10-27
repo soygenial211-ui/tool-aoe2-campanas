@@ -1,0 +1,69 @@
+# Castelari — Reino de Castelar (espacio: Francos)
+# Identidad: el reino próspero de Isabela. Economía de granjas fuerte, caballería abrumadora,
+# castillos rápidos para asegurar territorio. Débil en arqueros y asedio pesado.
+espacio: French
+nombre: Castelari
+descripcion: Cavalry civilization. Prosperous farms, overwhelming cavalry and fast castles.
+limpiar_bonos: true
+archivo_arbol: FRANKS      # CivTechTrees/FRANKS.json
+
+textos:
+  civ: Castelari
+  unidad_unica: Outrider
+  unidad_unica_ayuda: Heavy cavalry with a charge attack.
+  bono_equipo: Stable units +2 line of sight
+  bonos_extra: ["Castles cost 20% less stone (paid in wood instead)"]
+
+bonos:
+  - nombre: Granjas +20% comida
+    texto: "Farms contain +20% food"
+    efectos:
+      - {op: recurso, id: 36, modo: multiplicar, valor: 1.2}
+  - nombre: Caballeria +1 ataque (Castillos)
+    texto: "Cavalry +1 attack in the Castle Age, +2 in the Imperial Age"
+    edad: castillos
+    efectos:
+      - {op: sumar, grupo: caballeria, atributo: ataque, tipo: cuerpo, valor: 1}
+  - nombre: Caballeria +1 ataque (Imperial)
+    texto: ""     # se describe junto con el bono anterior
+    edad: imperial
+    efectos:
+      - {op: sumar, grupo: caballeria, atributo: ataque, tipo: cuerpo, valor: 1}
+  - nombre: Establos trabajan 15% mas rapido
+    texto: "Stables work 15% faster"
+    efectos:
+      - {op: multiplicar, grupo: establos, atributo: ritmo_trabajo, valor: 1.15}
+  - nombre: Mercado 20% mas barato
+    texto: "Markets cost -20%"
+    efectos:
+      - {op: multiplicar, unidad: 84, atributo: costo, valor: 0.8}
+
+# 20% de la piedra del castillo se paga en madera (dato fijo de la civ)
+editar_unidades:
+  - {unidad: 82, costo: {piedra: 520, madera: 130}}
+
+bono_equipo:
+  - {op: sumar, grupo: unidades_de_establo, atributo: vision, valor: 2}
+
+unidad_unica:          # Outrider = Coustillier
+  usar: [1655, 1657]
+
+
+tech_castillos:
+  nombre: Scaffolding
+  ayuda: Castles cost no wood and are built 33% faster.
+  efectos:
+    - {op: fijar, unidad: 82, atributo: costo_madera, valor: 0}
+    - {op: multiplicar, unidad: 82, atributo: tiempo_creacion, valor: 0.67}
+
+tech_imperial:
+  nombre: Iron Stirrups
+  ayuda: Cavalry +10% speed and +10% HP.
+  efectos:
+    - {op: multiplicar, grupo: caballeria, atributo: velocidad, valor: 1.1}
+    - {op: multiplicar, grupo: caballeria, atributo: vida, valor: 1.1}
+
+arbol:
+  # caballería completa (Húsar y Bloodlines incluidos); arqueros y asedio a medias
+  sin: [Arbalest, Heavy Cavalry Archer, Siege Onager, Heavy Scorpion, Siege Engineers]
+  con: [Hussar, Bloodlines]

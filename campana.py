@@ -9,6 +9,7 @@ Comandos:
   python campana.py info                 Lista las civilizaciones del .dat (índice, nombre interno).
   python campana.py info <civ>           Detalla una civ: techs propias (únicas, bonos, UU) y su árbol (lo deshabilitado).
   python campana.py info <civ> --mod CAMP-<Nombre>   Igual, pero leyendo el .dat de esa campaña.
+  python campana.py visor [--mod CAMP-<Nombre>]       Genera visor-*.html con civs y catálogo de unidades.
 
 Nunca modifica archivos del juego: solo lee de la instalación y escribe en la carpeta de la herramienta
 y en mods/local.
@@ -76,7 +77,12 @@ def cmd_verificar(args, cfg):
     print(f"  versión del formato: {dat.version}")
     print(f"  civs: {len(dat.civs)} · techs: {len(dat.techs)} · efectos: {len(dat.effects)} "
           f"· unidades por civ: {len(dat.civs[0].units)}")
+    import zlib
+    crudo = zlib.decompress(origen.read_bytes(), wbits=-15)
     original = dat.to_bytes()
+    if original != crudo:
+        sys.exit("ERROR: al reescribirlo, el .dat no coincide byte a byte con el del juego. "
+                 "No es seguro editarlo con esta versión de la librería.")
     with tempfile.TemporaryDirectory() as tmp:
         copia = Path(tmp) / DAT_NOMBRE
         dat.save(copia)
@@ -155,6 +161,22 @@ ATRIBUTOS = {
     10: "recarga", 12: "alcance", 13: "ritmo de trabajo", 14: "capacidad de carga", 100: "costo",
     101: "tiempo de creación", 103: "costo oro", 104: "costo comida", 105: "costo madera", 106: "costo piedra",
 }
+# Clases de unidad (campo 'class' de la unidad)
+CLASES = {
+    0: "arqueros", 3: "edificios", 4: "aldeanos", 6: "infantería", 12: "caballería", 13: "asedio",
+    18: "monjes", 19: "carretas de comercio", 20: "barcos de transporte", 21: "pesqueros", 22: "barcos de guerra",
+    23: "conquistadores", 24: "elefantes", 35: "petardos", 36: "arqueros a caballo", 43: "monjes con reliquia",
+    44: "cañón de mano", 46: "piqueros", 47: "exploradores", 51: "asedio empacado", 52: "torres",
+    54: "asedio desempacado", 55: "escorpiones",
+}
+# Clases de ataque/armadura (codificadas en d = clase*256 + cantidad)
+CLASES_ARMADURA = {
+    1: "infantería", 3: "perforante", 4: "cuerpo a cuerpo", 5: "elefantes", 8: "caballería", 11: "todos los edificios",
+    15: "arqueros", 16: "barcos", 17: "arietes", 19: "unidades únicas", 20: "asedio", 21: "edificios",
+    22: "murallas y puertas", 23: "pólvora", 25: "monjes", 26: "castillos", 27: "piqueros", 28: "arqueros a caballo",
+    29: "guerreros águila", 30: "camellos",
+}
+RECURSOS = {0: "comida", 1: "madera", 2: "piedra", 3: "oro", 4: "población", 32: "bonificación de población"}
 
 
 def abrir_dat(args, cfg) -> DatFile:
@@ -187,10 +209,24 @@ def describir_comando(dat: DatFile, c) -> str:
     if base == 3:
         return f"mejora {nombre_unidad(dat, c.a)} → {nombre_unidad(dat, c.b)}{equipo}"
     if base in (0, 4, 5):
-        objetivo = nombre_unidad(dat, c.a) if c.a >= 0 else f"clase {c.b}"
-        atributo = ATRIBUTOS.get(int(c.c), f"atributo {c.c}")
-        signo = {0: "=", 4: "+", 5: "×"}[base]
+        objetivo = nombre_unidad(dat, c.a) if c.a >= 0 else CLASES.get(c.b, f"clase {c.b}")
+        attr = int(c.c)
+        atributo = ATRIBUTOS.get(attr, f"atributo {attr}")
+        if attr in (8, 9) and base in (0, 4):  # ataque/armadura: d = clase*256 + cantidad
+            clase, cant = divmod(int(c.d), 256)
+            atributo = f"{atributo} {CLASES_ARMADURA.get(clase, f'clase {clase}')}"
+            valor = f"{cant:+d}" if base == 4 else f"= {cant}"
+            return f"{atributo} {valor} a {objetivo}{equipo}"
+        if base == 5:
+            pct = (c.d - 1) * 100
+            return f"{atributo} ×{c.d:.3g} ({pct:+.0f}%) a {objetivo}{equipo}"
+        signo = "=" if base == 0 else "+"
         return f"{atributo} {signo} {c.d:g} a {objetivo}{equipo}"
+    if base in (1, 6):
+        recurso = RECURSOS.get(c.a, f"recurso #{c.a}")
+        if base == 6:
+            return f"{recurso} ×{c.d:g}{equipo}"
+        return f"{recurso} {'+' if c.b == 1 else '='}{c.d:g}{equipo}"
     if base == 102:
         return f"deshabilita tech {nombre_tech(dat, int(c.d))}"
     if base in (101, 103):
@@ -222,11 +258,21 @@ def cmd_info(args, cfg):
     print(f"== {civ.name} (civ #{i})")
     propias = [(tid, t) for tid, t in enumerate(dat.techs) if t.civ == i]
     print(f"\n-- Techs propias de la civ ({len(propias)}): únicas, bonos y habilitación de UU")
+    # Agrupa las techs que comparten nombre y efecto (p. ej. un bono que se dispara con varias techs)
+    grupos: dict[tuple[str, int], list[int]] = {}
     for tid, t in propias:
-        print(f"  tech {tid:>4}  {t.name}")
-        if 0 <= t.effect_id < len(dat.effects):
-            for c in dat.effects[t.effect_id].effect_commands:
+        grupos.setdefault((t.name, t.effect_id), []).append(tid)
+    for (nombre, efecto), tids in grupos.items():
+        ids = ", ".join(map(str, tids))
+        print(f"  tech {ids}  {nombre}" + (f"  (×{len(tids)})" if len(tids) > 1 else ""))
+        disparadores = sorted({nombre_tech(dat, r) for tid in tids for r in dat.techs[tid].required_techs if r >= 0})
+        if disparadores and len(tids) > 1:
+            print(f"            se activa con: {', '.join(disparadores)}")
+        if 0 <= efecto < len(dat.effects):
+            for c in dat.effects[efecto].effect_commands:
                 print(f"            · {describir_comando(dat, c)}")
+        else:
+            print("            · (sin efecto propio)")
     if 0 <= civ.team_bonus_id < len(dat.effects):
         print(f"\n-- Bono de equipo (efecto {civ.team_bonus_id})")
         for c in dat.effects[civ.team_bonus_id].effect_commands:
@@ -244,6 +290,101 @@ def cmd_info(args, cfg):
             print(f"  · {describir_comando(dat, c)}")
 
 
+# ----------------------------------------------------------------- aplicar
+IDIOMAS_TEXTOS = ["en", "es", "mx"]
+
+
+def cmd_aplicar(args, cfg):
+    import yaml
+    import motor
+
+    carpeta = Path(args.recetas)
+    recetas = sorted(p for p in carpeta.glob("*.yaml") if not p.name.startswith("_")) if carpeta.is_dir() else [carpeta]
+    ajustes_path = (carpeta if carpeta.is_dir() else carpeta.parent) / "_campana.yaml"
+    ajustes = yaml.safe_load(ajustes_path.read_text(encoding="utf-8")) if ajustes_path.exists() else {}
+    if not recetas:
+        sys.exit(f"No hay recetas .yaml en {carpeta}")
+    mod = Path(cfg["mods_local"]) / args.mod
+    registro_path = mod / "campana.json"
+    if not registro_path.exists():
+        sys.exit(f"{mod} no es un mod creado con 'nueva'.")
+    registro = json.loads(registro_path.read_text(encoding="utf-8"))
+    snap = carpeta_snapshots() / registro["base"]
+    dat_dir = mod / "resources" / "_common" / "dat"
+
+    # Siempre se parte del .dat original congelado: aplicar dos veces da el mismo resultado.
+    print(f"Leyendo base {snap.name} ... (tarda ~1 min)")
+    dat = DatFile.parse(snap / DAT_NOMBRE)
+    civs_json = json.loads((snap / "civilizations.json").read_text(encoding="utf-8"))
+    cadenas: dict[int, str] = {}
+    usadas: set[str] = set()
+    for ruta in recetas:
+        receta = yaml.safe_load(ruta.read_text(encoding="utf-8"))
+        try:
+            for linea in motor.aplicar_receta(dat, receta):
+                print(linea)
+            cadenas.update(motor.aplicar_textos(dat, receta))
+            cadenas.update(motor.actualizar_civilizations(dat, receta, civs_json))
+            usadas.add(receta.get("archivo_arbol"))
+            if receta.get("archivo_arbol"):
+                nombre = f"{receta['archivo_arbol']}.json"
+                arbol = json.loads((snap / "CivTechTrees" / nombre).read_text(encoding="utf-8"))
+                for linea in motor.actualizar_arbol_json(dat, receta, arbol):
+                    print(linea)
+                (dat_dir / "CivTechTrees" / nombre).write_text(json.dumps(arbol, indent=2), encoding="utf-8")
+        except motor.ErrorReceta as e:
+            sys.exit(f"ERROR en {ruta.name}: {e}")
+
+    if ajustes.get("apagar_civs", True):
+        formato = ajustes.get("formato_apagado", "· {nombre} ·")
+        apagadas = motor.apagar_civs(civs_json, usadas, formato)
+        cadenas.update(apagadas)
+        print(f"Civs sin usar renombradas: {len(apagadas)} (formato '{formato}')")
+    (dat_dir / "civilizations.json").write_text(json.dumps(civs_json, indent=2), encoding="utf-8")
+
+    destino = dat_dir / DAT_NOMBRE
+    dat.save(destino)
+    print(f"\n.dat guardado en {destino}")
+
+    lineas = [f'{k} "{v}"'.replace("\n", "\\n") for k, v in sorted(cadenas.items())]
+    for lang in IDIOMAS_TEXTOS:
+        ruta = mod / "resources" / lang / "strings" / "key-value" / "key-value-modded-strings-utf8.txt"
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_text("\n".join(lineas) + "\n", encoding="utf-8")
+    print(f"Textos: {len(cadenas)} cadenas en {', '.join(IDIOMAS_TEXTOS)}")
+
+    registro["recetas"] = [str(r) for r in recetas]
+    registro["aplicado"] = datetime.now().isoformat(timespec="seconds")
+    registro_path.write_text(json.dumps(registro, indent=2, ensure_ascii=False), encoding="utf-8")
+    print("Listo. Abre el juego, activa solo este mod y revisa las civs en el editor de escenarios.")
+
+
+def cmd_visor(args, cfg):
+    import visor
+
+    strings = Path(cfg.get("juego_strings") or Path(cfg["juego_dat"]).parents[1] / "en" / "strings" / "key-value")
+    originales = visor.leer_textos(strings / "key-value-strings-utf8.txt")
+    if not originales:
+        sys.exit(f"No encontré los textos del juego en {strings} (agrega 'juego_strings' en config.json).")
+    if args.mod:
+        mod = Path(cfg["mods_local"]) / args.mod
+        dat_dir = mod / "resources" / "_common" / "dat"
+        textos = visor.leer_textos(strings / "key-value-strings-utf8.txt",
+                                   mod / "resources" / "en" / "strings" / "key-value" / "key-value-modded-strings-utf8.txt")
+        titulo, sub = args.mod, f"Civilizaciones y unidades del mod {args.mod}"
+    else:
+        dat_dir = ultimo_snapshot() if carpeta_snapshots().exists() and any(carpeta_snapshots().iterdir()) else dat_del_juego(cfg)
+        textos, titulo, sub = originales, "AoE2 DE", "Civilizaciones y unidades del juego original"
+    print("Leyendo .dat ... (tarda ~1 min)")
+    dat = DatFile.parse(dat_dir / DAT_NOMBRE)
+    civs_json = json.loads((dat_dir / "civilizations.json").read_text(encoding="utf-8"))
+    datos = visor.extraer(dat, civs_json, textos, originales)
+    sub += f" · generado {datetime.now():%Y-%m-%d %H:%M}"
+    destino = RAIZ / f"visor-{args.mod or 'original'}.html"
+    destino.write_text(visor.generar_html(datos, titulo, sub), encoding="utf-8")
+    print(f"Visor: {destino}  ({len(datos['civs'])} civs, {len(datos['unidades'])} unidades). Ábrelo con doble clic.")
+
+
 # ----------------------------------------------------------------- main
 def main():
     p = argparse.ArgumentParser(description="Banco de datos por campaña para AoE2 DE")
@@ -252,9 +393,12 @@ def main():
     sub.add_parser("base")
     n = sub.add_parser("nueva"); n.add_argument("nombre")
     i = sub.add_parser("info"); i.add_argument("civ", nargs="?"); i.add_argument("--mod")
+    a = sub.add_parser("aplicar"); a.add_argument("recetas"); a.add_argument("--mod", required=True)
+    v = sub.add_parser("visor"); v.add_argument("--mod")
     args = p.parse_args()
     cfg = cargar_config()
-    {"verificar": cmd_verificar, "base": cmd_base, "nueva": cmd_nueva, "info": cmd_info}[args.cmd](args, cfg)
+    {"verificar": cmd_verificar, "base": cmd_base, "nueva": cmd_nueva, "info": cmd_info,
+     "aplicar": cmd_aplicar, "visor": cmd_visor}[args.cmd](args, cfg)
 
 
 if __name__ == "__main__":
