@@ -1,0 +1,69 @@
+# Harlands — Covenant de las Marcas Libres (espacio: Celtas)
+# Identidad: rebeldes de los bosques. Leñadores y guerrilla: infantería rápida y pegadora,
+# asedio barato para tumbar fortalezas del imperio. Sin arqueros buenos ni caballería pesada.
+espacio: Celts
+nombre: Harlands
+descripcion: Rebel civilization. Fast hard-hitting infantry, woodsmen and siege.
+limpiar_bonos: true
+archivo_arbol: CELTS      # CivTechTrees/CELTS.json
+
+textos:
+  civ: Harlands
+  unidad_unica: Hearthguard
+  unidad_unica_ayuda: Dismounted knight. Hits hard, but slow.
+  bono_equipo: Infantry +2 attack vs buildings
+
+bonos:
+  - nombre: Lenadores 15% mas rapidos
+    texto: "Lumberjacks work 15% faster"
+    efectos:
+      - {op: multiplicar, grupo: lenadores, atributo: ritmo_trabajo, valor: 1.15}
+  - nombre: Infanteria +10% velocidad (Feudal)
+    texto: "Infantry moves 10% faster starting in the Feudal Age"
+    edad: feudal
+    efectos:
+      - {op: multiplicar, grupo: infanteria, atributo: velocidad, valor: 1.1}
+  - nombre: Infanteria +1 ataque (Castillos)
+    texto: "Infantry +1 attack in the Castle Age, +2 in the Imperial Age"
+    edad: castillos
+    efectos:
+      - {op: sumar, grupo: infanteria, atributo: ataque, tipo: cuerpo, valor: 1}
+  - nombre: Infanteria +1 ataque (Imperial)
+    texto: ""     # se describe junto con el bono anterior
+    edad: imperial
+    efectos:
+      - {op: sumar, grupo: infanteria, atributo: ataque, tipo: cuerpo, valor: 1}
+  - nombre: Taller de asedio 20% mas rapido
+    texto: "Siege Workshops work 20% faster"
+    efectos:
+      - {op: multiplicar, grupo: taller_de_asedio, atributo: ritmo_trabajo, valor: 1.2}
+  - nombre: Ingenieros y Alabardero 50% mas baratos
+    texto: "Siege Engineers and Halberdier upgrades cost -50%"
+    efectos:
+      - {op: costo_tech, tech: Siege Engineers, multiplicar: 0.5}
+      - {op: costo_tech, tech: Halberdier, multiplicar: 0.5}
+
+bono_equipo:
+  - {op: sumar, grupo: infanteria, atributo: ataque, tipo: edificios, valor: 2}
+
+unidad_unica:          # Hearthguard = Konnik desmontado (unidad del editor), entrenable en el castillo
+  usar: [1252, 1253]   # en el juego original no tiene costo: se le pone uno
+  cambios: {vida: "+10", costo: {comida: 60, oro: 30}, tiempo: 12}
+
+
+tech_castillos:
+  nombre: Heavy Chainmail
+  ayuda: Infantry +1/+1 armor.
+  efectos:
+    - {op: sumar, grupo: infanteria, atributo: armadura, tipo: cuerpo, valor: 1}
+    - {op: sumar, grupo: infanteria, atributo: armadura, tipo: perforante, valor: 1}
+
+tech_imperial:
+  nombre: Vassalage
+  ayuda: Infantry costs -20%.
+  efectos:
+    - {op: multiplicar, grupo: infanteria, atributo: costo, valor: 0.8}
+
+arbol:
+  sin: [Arbalest, Bracer, Thumb Ring, Paladin, Cavalier]
+  con: [Two Man Saw]

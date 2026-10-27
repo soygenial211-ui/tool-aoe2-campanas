@@ -1,0 +1,3 @@
+# Ajustes de la campaña (no es una civ)
+apagar_civs: true                 # renombra las civs que esta campaña no usa
+formato_apagado: "· {nombre} ·"   # {nombre} = nombre original en inglés

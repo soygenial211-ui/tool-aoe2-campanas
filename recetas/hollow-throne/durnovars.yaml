@@ -1,0 +1,67 @@
+# Durnovars — Orden de Durnovar (espacio: Teutones)
+# Identidad: orden religiosa militar. Infantería blindada lenta, monjes resistentes,
+# fe que no se quiebra (resistencia a conversión). Sin caballería ligera ni buenos arqueros.
+espacio: Teutons
+nombre: Durnovars
+descripcion: Holy order. Armored infantry, durable monks and unbreakable faith.
+limpiar_bonos: true
+archivo_arbol: TEUTONS      # CivTechTrees/TEUTONS.json
+
+textos:
+  civ: Durnovars
+  unidad_unica: Eisenbruder
+  unidad_unica_ayuda: Slow, heavily armored infantry. Weak against archers.
+  bono_equipo: Units are harder to convert
+
+bonos:
+  - nombre: Infanteria +1 armadura perforante (Castillos)
+    texto: "Infantry +1 pierce armor in the Castle Age, +2 in the Imperial Age"
+    edad: castillos
+    efectos:
+      - {op: sumar, grupo: infanteria, atributo: armadura, tipo: perforante, valor: 1}
+  - nombre: Infanteria +1 armadura perforante (Imperial)
+    texto: ""     # se describe junto con el bono anterior
+    edad: imperial
+    efectos:
+      - {op: sumar, grupo: infanteria, atributo: armadura, tipo: perforante, valor: 1}
+  - nombre: Monjes curan al doble de alcance
+    texto: "Monks heal from twice the range"
+    efectos:
+      - {op: recurso, id: 90, modo: fijar, valor: 8}
+  - nombre: Monasterios 20% mas rapidos
+    texto: "Monasteries work 20% faster"
+    efectos:
+      - {op: multiplicar, grupo: monasterios, atributo: ritmo_trabajo, valor: 1.2}
+  - nombre: Redencion y Expiacion gratis
+    texto: "Redemption and Atonement are free"
+    efectos:
+      - {op: costo_tech, tech: Redemption, multiplicar: 0}
+      - {op: costo_tech, tech: Atonement, multiplicar: 0}
+  - nombre: Monjes +15 vida
+    texto: "Monks +15 HP starting in the Castle Age"
+    edad: castillos
+    efectos:
+      - {op: sumar, grupo: monjes, atributo: vida, valor: 15}
+
+bono_equipo:   # resistencia a la conversión (la fe de la Orden)
+  - {op: recurso, id: 178, modo: sumar, valor: 3}
+  - {op: recurso, id: 179, modo: sumar, valor: 1}
+
+unidad_unica:          # Eisenbruder = Caballero Teutón original, con +1 de armadura perforante
+  cambios: {armadura_perforante: "+1"}
+
+tech_castillos:
+  nombre: Ordensregel
+  ayuda: Monks +3/+3 armor.
+  efectos:
+    - {op: sumar, grupo: monjes, atributo: armadura, tipo: cuerpo, valor: 3}
+    - {op: sumar, grupo: monjes, atributo: armadura, tipo: perforante, valor: 3}
+
+tech_imperial:
+  nombre: Eiserner Wille
+  ayuda: Infantry +15% HP.
+  efectos:
+    - {op: multiplicar, grupo: infanteria, atributo: vida, valor: 1.15}
+
+arbol:
+  sin: [Arbalest, Thumb Ring, Hussar, Light Cavalry, Paladin, Parthian Tactics]
