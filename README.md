@@ -33,3 +33,6 @@ Cada civ es un `.yaml` en `recetas/<campaña>/`. Ver `recetas/hollow-throne/` co
 
 ## Campaña nueva
 Ver [NUEVA_CAMPANA.md](NUEVA_CAMPANA.md): qué datos darle a Claude y el proceso completo.
+
+## Estado actual
+Ver [ESTADO.md](ESTADO.md) para retomar el trabajo en otra conversación.
